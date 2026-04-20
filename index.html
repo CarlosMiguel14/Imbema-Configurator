@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tussenmeter Configurator — EMU vs EMH</title>
+<style>
+  /* Self-contained font stack — no external dependencies */
+
+</style>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --emu-green: #1D9E75;
+    --emu-light: #E1F5EE;
+    --emu-dark: #0F6E56;
+    --emh-blue: #185FA5;
+    --emh-light: #E6F1FB;
+    --emh-dark: #0C447C;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --surface2: #F0EEE9;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1A1916;
+    --text-2: #5F5E5A;
+    --text-3: #888780;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.1);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+  .logo-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .logo-dot.green { background: var(--emu-green); }
+  .logo-dot.blue  { background: var(--emh-blue); }
+  header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  header span.sub-h {
+    font-size: 13px;
+    color: var(--text-2);
+    margin-left: 6px;
+  }
+
+  /* ── PROGRESS ── */
+  .prog-wrap {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+  }
+  .prog-steps {
+    display: flex;
+    gap: 0;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .prog-step {
+    flex: 1;
+    padding: 10px 0;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-3);
+    text-align: center;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .prog-step.active { color: var(--emu-green); border-bottom-color: var(--emu-green); }
+  .prog-step.done   { color: var(--text-2); border-bottom-color: var(--border-strong); }
+
+  /* ── MAIN ── */
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 4rem;
+  }
+
+  /* ── STEP CARD ── */
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem 2rem 1.5rem;
+    box-shadow: var(--shadow);
+    animation: fadeUp 0.25s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--emu-green);
+    margin-bottom: 0.5rem;
+  }
+  .step-q {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+  }
+  .step-sub {
+    font-size: 14px;
+    color: var(--text-2);
+    margin-bottom: 1.75rem;
+    line-height: 1.65;
+  }
+
+  /* ── OPTIONS ── */
+  .opts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 1.75rem;
+  }
+  .opt-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 13px 16px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .opt-btn:hover { border-color: var(--emu-green); background: var(--emu-light); transform: translateX(2px); }
+  .opt-btn.sel {
+    border: 1.5px solid var(--emu-green);
+    background: var(--emu-light);
+  }
+  .opt-radio {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 1.5px solid var(--border-strong);
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .opt-btn.sel .opt-radio { border-color: var(--emu-green); background: var(--emu-green); }
+  .opt-radio-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: white; opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .opt-btn.sel .opt-radio-dot { opacity: 1; }
+  .opt-text { flex: 1; }
+  .opt-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .opt-sub-text { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+
+  /* ── NAV ── */
+  .nav-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    padding-top: 1.25rem;
+    margin-top: 0.5rem;
+  }
+  .btn {
+    border-radius: var(--radius-sm);
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    transition: opacity 0.15s, background 0.15s, transform 0.1s;
+    border: none;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--emu-green); color: white; }
+  .btn-primary:disabled { opacity: 0.3; cursor: default; }
+  .btn-primary:not(:disabled):hover { background: var(--emu-dark); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border-strong); color: var(--text-2); }
+  .btn-ghost:hover { background: var(--surface2); }
+
+  /* ── RESULT ── */
+  .result-wrap { animation: fadeUp 0.3s ease both; }
+
+  .result-header {
+    margin-bottom: 1.5rem;
+  }
+  .result-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+  .result-header p {
+    font-size: 14px;
+    color: var(--text-2);
+  }
+
+  /* selection summary */
+  .summary-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 1.5rem;
+  }
+  .s-pill {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    background: var(--surface);
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  /* why block */
+  .why-card {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .why-card h3 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-3);
+    margin-bottom: 0.75rem;
+  }
+  .why-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 7px;
+    font-size: 13.5px;
+    color: var(--text);
+    line-height: 1.55;
+  }
+  .why-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--emu-green);
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+
+  /* specs row */
+  .specs-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 560px) { .specs-row { grid-template-columns: 1fr 1fr; } }
+  .spec-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+  }
+  .spec-box-label { font-size: 11px; color: var(--text-3); }
+  .spec-box-val { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 3px; }
+
+  /* notice */
+  .notice {
+    border-radius: var(--radius-sm);
+    padding: 11px 15px;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .notice-amber { background: var(--amber-light); color: #633806; border: 1px solid rgba(186,117,23,0.2); }
+  .notice-blue  { background: var(--emh-light); color: var(--emh-dark); border: 1px solid rgba(24,95,165,0.15); }
+  .notice-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  /* brand columns */
+  .brands-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-3);
+    margin-bottom: 10px;
+  }
+  .brand-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 500px) { .brand-grid { grid-template-columns: 1fr; } }
+  .brand-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+  .brand-head {
+    padding: 11px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bh-emu { background: var(--emu-light); border-bottom: 1px solid rgba(29,158,117,0.2); }
+  .bh-emh { background: var(--emh-light); border-bottom: 1px solid rgba(24,95,165,0.15); }
+  .brand-logo-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .bld-emu { background: var(--emu-green); }
+  .bld-emh { background: var(--emh-blue); }
+  .brand-head-name {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .bhn-emu { color: var(--emu-dark); }
+  .bhn-emh { color: var(--emh-dark); }
+  .brand-body { padding: 14px 16px; }
+  .model-name-r { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .model-nr-badge {
+    display: inline-block;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 11px;
+    background: var(--surface2);
+    color: var(--text-2);
+    padding: 2px 9px;
+    border-radius: 4px;
+    margin-bottom: 9px;
+    border: 1px solid var(--border);
+  }
+  .model-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+  .m-pill {
+    font-size: 11px;
+    color: var(--text-2);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 2px 9px;
+    border-radius: 20px;
+  }
+  .model-note {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-bottom: 9px;
+    line-height: 1.5;
+  }
+  .model-link-emu { font-size: 12px; font-weight: 500; color: var(--emu-green); text-decoration: none; }
+  .model-link-emu:hover { text-decoration: underline; }
+  .model-link-emh { font-size: 12px; font-weight: 500; color: var(--emh-blue); text-decoration: none; }
+  .model-link-emh:hover { text-decoration: underline; }
+
+  .result-nav {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 12px;
+    color: var(--text-3);
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  footer a { color: var(--text-2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-row">
+    <div class="logo-dot green"></div>
+    <div class="logo-dot blue"></div>
+    <h1>Tussenmeter Configurator<span class="sub-h">EMU vs EMH</span></h1>
+  </div>
+</header>
+
+<div class="prog-wrap">
+  <div class="prog-steps" id="prog-steps">
+    <div class="prog-step active" data-i="0">Aansluiting</div>
+    <div class="prog-step" data-i="1">Stroom</div>
+    <div class="prog-step" data-i="2">Protocol</div>
+    <div class="prog-step" data-i="3">Toepassing</div>
+  </div>
+</div>
+
+<main>
+  <div id="wc"></div>
+</main>
+
+<footer>
+  Configurator op basis van productinformatie van
+  <a href="https://www.emu-metering.com/nl/" target="_blank">emu-metering.com</a> en
+  <a href="https://emh-metering.com/en/" target="_blank">emh-metering.com</a>. Raadpleeg altijd uw leverancier voor actuele specificaties en prijzen.
+</footer>
+
+<script>
+const STEPS = [
+  {
+    id: 'fase', idx: 0,
+    eyebrow: 'Stap 1 van 4',
+    q: 'Hoeveel fasen heeft de aansluiting?',
+    sub: '1-fase valt altijd onder kleinverbruik (max. 40A directe aansluiting). Bij 3-fase bepalen stroomsterkte en protocol het juiste metertype.',
+    opts: [
+      { v:'1f', t:'1-fase', s:'Woning of kleine ruimte — 230V, directe aansluiting tot 40A' },
+      { v:'3f', t:'3-fase', s:'Bedrijfsruimte, utiliteit of grotere installatie — 400V' }
+    ]
+  },
+  {
+    id: 'stroom', idx: 1,
+    eyebrow: 'Stap 2 van 4',
+    q: 'Wat is de waarde van de hoofdzekering?',
+    sub: 'Tot 100A kan rechtstreeks worden aangesloten (EMU Professional II 3/100). Boven 100A is een stroomtransformator nodig (EMU Professional II 3/5). EMH industriemeters zijn DIN-rail submeters voor deelcircuits.',
+    opts: [
+      { v:'le63',  t:'≤63A',       s:'Kleinere 3-fase installatie — directe aansluiting' },
+      { v:'le100', t:'64A – 100A', s:'Bovengrens directe aansluiting' },
+      { v:'gt100', t:'>100A',      s:'Grootverbruik — stroomtransformator vereist' }
+    ],
+    skip: a => a.fase === '1f', skipVal: 'le63'
+  },
+  {
+    id: 'proto', idx: 2,
+    eyebrow: 'Stap 3 van 4',
+    q: 'Welk communicatieprotocol is gewenst?',
+    sub: 'EMU biedt S0, M-Bus, Modbus, TCP/IP en LoRa. EMH industriemeters (DIZ) ondersteunen M-Bus en Smart Meter Gateway. Modbus RTU, TCP/IP en LoRa zijn EMU-exclusief.',
+    opts: [
+      { v:'s0',    t:'S0 pulsuitgang',          s:'Eenvoudig, voor pulsgestuurde dataloggers of gebouwbeheer' },
+      { v:'mbus',  t:'M-Bus',                   s:'Gebouwstandaard — ondersteund door EMU én EMH' },
+      { v:'modbus',t:'Modbus RTU / RS485',       s:'Industriestandaard voor PLC/SCADA — alleen EMU' },
+      { v:'tcpip', t:'TCP/IP (Ethernet)',        s:'Directe netwerkkoppeling, Modbus TCP + HTTP-API — alleen EMU' },
+      { v:'lora',  t:'LoRa (draadloos)',         s:'Draadloos lange afstand, 868MHz — alleen EMU' },
+      { v:'smgw',  t:'Smart Meter Gateway (iMSys)',s:'Koppeling via SMGw CASA — alleen EMH (DIZ-H)' }
+    ]
+  },
+  {
+    id: 'toep', idx: 3,
+    eyebrow: 'Stap 4 van 4',
+    q: 'Waarvoor wordt de tussenmeter ingezet?',
+    sub: 'Voor huurafrekening en doorlevering is een MID B+D gecertificeerde meter wettelijk verplicht in Nederland. Beide merken bieden MID-gecertificeerde modellen.',
+    opts: [
+      { v:'huur',  t:'Huurafrekening / doorlevering',  s:'Wettelijk verplicht: MID B+D gecertificeerd' },
+      { v:'kost',  t:'Kostentoedeling intern',          s:'MID aanbevolen, niet wettelijk verplicht' },
+      { v:'mon',   t:'Energiemonitoring / inzicht',     s:'Geen certificeringsverplichting' },
+      { v:'smrt',  t:'Smart metering / rollout (iMSys)',s:'Koppeling op slim meetsysteem via SMGw' }
+    ]
+  }
+];
+
+// EMU product database
+const EMU_DB = {
+  '1f':     { n:'EMU 1/40', nr:'950505', specs:['1-fase','40A direct','S0 pulsuitgang','MID B+D'], url:'https://www.emu-metering.com/nl/emu-1-40/950505' },
+  '3f_direct_s0':     { n:'Professional II 3/100', nr:'P20A0000', specs:['3-fase','100A direct','S0 pulsuitgang','MID B+D'], url:'https://www.emu-metering.com/nl/emu-professional-ii-3-100/P20A0000' },
+  '3f_direct_mbus':   { n:'Professional II 3/100 M-Bus', nr:'P20A000M', specs:['3-fase','100A direct','M-Bus','MID B+D','Dual tarief'], url:'https://www.emu-metering.com/nl/emu-professional-ii-3-100-m-bus/P20A000M' },
+  '3f_direct_modbus': { n:'Professional II 3/100 Modbus', nr:'P20A000MO', specs:['3-fase','100A direct','Modbus RTU/RS485','MID B+D'], url:'https://www.emu-metering.com/nl/emu-professional-ii-3-100-modbus/P20A000MO' },
+  '3f_direct_tcpip':  { n:'Professional II 3/100 TCP/IP', nr:'P20A000T', specs:['3-fase','100A direct','TCP/IP','Modbus TCP','HTTP-API','MID B+D'], url:'https://www.emu-metering.com/nl/emu-professional-ii-3-100-tcp-ip/P20A000T' },
+  '3f_direct_lora':   { n:'Professional II 3/100 LoRa', nr:'P20A000LO', specs:['3-fase','100A direct','LoRa 868MHz','MID B+D'], url:'https://www.emu-metering.com/nl/emu-professional-ii-3-100-lora/P20A000LO' },
+  '3f_trafo_s0':      { n:'Professional II 3/5', nr:'P21A0000', specs:['3-fase','Trafo /5A of /1A','S0 pulsuitgang','MID B+D','>100A'], url:'https://www.emu-metering.com/nl/emu-professional-ii-3-5/P21A0000' },
+  '3f_trafo_mbus':    { n:'Professional II 3/5 M-Bus', nr:'P21A000M', specs:['3-fase','Trafo /5A of /1A','M-Bus','MID B+D','>100A'], url:'https://www.emu-metering.com/nl/emu-professional-ii-3-5-m-bus/P21A000M' },
+  '3f_trafo_modbus':  { n:'Professional II 3/5 Modbus', nr:'P21A000MO', specs:['3-fase','Trafo /5A of /1A','Modbus RTU/RS485','MID B+D','>100A'], url:'https://www.emu-metering.com/nl/emu-professional-ii-3-5-modbus/P21A000MO' },
+  '3f_trafo_tcpip':   { n:'Professional II 3/5 TCP/IP', nr:'P21A000T', specs:['3-fase','Trafo /5A of /1A','TCP/IP','Modbus TCP','MID B+D','>100A'], url:'https://www.emu-metering.com/nl/emu-professional-ii-3-5-tcp-ip/P21A000T' },
+  '3f_trafo_lora':    { n:'Professional II 3/5 LoRa', nr:'P21A000LO', specs:['3-fase','Trafo /5A of /1A','LoRa 868MHz','MID B+D','>100A'], url:'https://www.emu-metering.com/nl/emu-professional-ii-3-5-lora/P21A000LO' },
+};
+
+// EMH product database
+const EMH_DB = {
+  '1f':      { n:'eHZ-P / eBZD-H', nr:'eHZ-P · eBZD-H', specs:['1-fase','Plug-in of 3-punts','Smart Meter Gateway','MID'], note:'Huishoudmeter voor plug-in of 3-punts installatie', url:'https://emh-metering.com/en/products/domestic-meters-smart-meters/' },
+  'diz_g':   { n:'DIZ-G', nr:'DIZ-G', specs:['DIN-rail','3-fase','Directe aansluiting','Facturering','MID'], note:'Industriemeter voor submeting en facturering', url:'https://emh-metering.com/en/products/industrial-meters/diz-g/' },
+  'diz_gh':  { n:'DIZ-G / DIZ-H', nr:'DIZ-G · DIZ-H', specs:['DIN-rail','3-fase','M-Bus','MID'], note:'DIZ-G voor algemeen gebruik, DIZ-H voor SMGw-koppeling', url:'https://emh-metering.com/en/products/industrial-meters/' },
+  'diz_h':   { n:'DIZ-H', nr:'DIZ-H', specs:['DIN-rail','3-fase','LMN interface','Smart Meter Gateway','MID'], note:'Gekoppeld aan Smart Meter Gateway (CASA) voor iMSys rollout', url:'https://emh-metering.com/en/products/industrial-meters/diz-h/' },
+  'special': { n:'LZQJ-XC / DMTZ-XC', nr:'LZQJ-XC · DMTZ-XC', specs:['Hoge nauwkeurigheid','4-kwadrant','RLM lastprofiel','Alle netniveaus'], note:'Hoge nauwkeurigheid voor groot-verbruik en transmissienetten', url:'https://emh-metering.com/en/products/special-meters/' },
+  'ebzd_f':  { n:'eBZD-F', nr:'eBZD-F', specs:['Meettrafo','3-fase','Smart Meter Gateway','Grotere afname'], note:'Basismeters met trafo-functie voor grotere afname in iMSys', url:'https://emh-metering.com/en/products/domestic-meters-smart-meters/ebzd-f/' },
+  'na':      { n:'Niet beschikbaar', nr:'—', specs:[], note:'EMH biedt geen equivalent voor dit protocol', url:'https://emh-metering.com/en/products/' }
+};
+
+function getEMU(a) {
+  if (a.fase === '1f') return EMU_DB['1f'];
+  const trafo = a.stroom === 'gt100';
+  const tier = trafo ? 'trafo' : 'direct';
+  const p = a.proto === 'smgw' ? 's0' : (a.proto || 's0');
+  return EMU_DB[`3f_${tier}_${p}`] || EMU_DB[`3f_direct_s0`];
+}
+
+function getEMH(a) {
+  if (a.fase === '1f') return EMH_DB['1f'];
+  const p = a.proto || 's0';
+  const t = a.toep || 'mon';
+  if (a.stroom === 'gt100') {
+    return (t === 'smrt' || p === 'smgw') ? EMH_DB['ebzd_f'] : EMH_DB['special'];
+  }
+  if (p === 'smgw') return EMH_DB['diz_h'];
+  if (p === 'mbus') return EMH_DB['diz_gh'];
+  if (['modbus','tcpip','lora'].includes(p)) return EMH_DB['na'];
+  return EMH_DB['diz_g'];
+}
+
+function getReasons(a) {
+  const r = [];
+  if (a.fase === '1f') r.push('1-fase aansluiting — altijd kleinverbruik, directe aansluiting tot 40A');
+  if (a.stroom === 'le63') r.push('Hoofdzekering ≤63A — directe aansluiting, geen stroomtrafo nodig');
+  if (a.stroom === 'le100') r.push('Hoofdzekering tot 100A — directe aansluiting nog mogelijk (grens Professional II 3/100)');
+  if (a.stroom === 'gt100') r.push('Hoofdzekering >100A — stroomtrafo vereist bij EMU; bijzondere meter bij EMH');
+  const pl = { s0:'S0 pulsuitgang', mbus:'M-Bus interface', modbus:'Modbus RTU/RS485 (EMU-exclusief)', tcpip:'TCP/IP netwerkkoppeling (EMU-exclusief)', lora:'LoRa draadloos 868MHz (EMU-exclusief)', smgw:'Smart Meter Gateway via LMN (EMH-exclusief DIZ-H + CASA)' };
+  if (a.proto) r.push(pl[a.proto] + ' geselecteerd als communicatieprotocol');
+  if (a.toep === 'huur') r.push('Huurafrekening: MID B+D certificering wettelijk verplicht — beide merken voldoen');
+  if (a.toep === 'smrt') r.push('iMSys rollout: EMH heeft volledig Smart Metering portfolio met CASA SMGw');
+  if (a.toep === 'mon')  r.push('Monitoring: geen MID-certificering vereist, beide merken geschikt');
+  return r;
+}
+
+function getSpecs(a) {
+  const p = a.proto || 's0';
+  const pLabel = { s0:'S0 puls', mbus:'M-Bus', modbus:'Modbus RTU', tcpip:'TCP/IP', lora:'LoRa', smgw:'SMGw (LMN)' };
+  return [
+    { l:'Fases', v: a.fase==='1f'?'1-fase (230V)':'3-fase (400V)' },
+    { l:'Stroom', v: a.fase==='1f'?'40A direct': a.stroom==='gt100'?'>100A (trafo)': a.stroom==='le100'?'≤100A':'≤63A' },
+    { l:'Protocol', v: pLabel[p] },
+    { l:'Certificering', v: a.toep==='huur'?'MID B+D vereist':'MID B+D aanwezig' }
+  ];
+}
+
+function getSummaryLabels(a) {
+  const fl = { '1f':'1-fase', '3f':'3-fase' };
+  const sl = { le63:'≤63A', le100:'≤100A', gt100:'>100A (trafo)' };
+  const pl = { s0:'S0 puls', mbus:'M-Bus', modbus:'Modbus RTU', tcpip:'TCP/IP', lora:'LoRa', smgw:'Smart Meter Gateway' };
+  const tl = { huur:'Huurafrekening', kost:'Kostentoedeling', mon:'Monitoring', smrt:'Smart metering' };
+  const out = [];
+  if (a.fase) out.push(fl[a.fase]);
+  if (a.stroom && a.fase !== '1f') out.push(sl[a.stroom]);
+  if (a.proto) out.push(pl[a.proto]);
+  if (a.toep) out.push(tl[a.toep]);
+  return out;
+}
+
+// State
+let answers = {}, cur = 0, stepOrder = [];
+
+function buildOrder() {
+  stepOrder = [];
+  for (let i = 0; i < STEPS.length; i++) {
+    const s = STEPS[i];
+    if (s.skip && s.skip(answers)) continue;
+    stepOrder.push(i);
+  }
+}
+
+function updateProgress(cur) {
+  buildOrder();
+  const activeSIdx = stepOrder[cur] ?? -1;
+  document.querySelectorAll('.prog-step').forEach(el => {
+    const i = parseInt(el.dataset.i);
+    const posInOrder = stepOrder.indexOf(i);
+    el.classList.remove('active','done');
+    if (posInOrder === cur) el.classList.add('active');
+    else if (posInOrder < cur && posInOrder >= 0) el.classList.add('done');
+    // skip grey out for skipped steps
+    if (!stepOrder.includes(i) && i !== 0) el.style.opacity = '0.35';
+    else el.style.opacity = '1';
+  });
+}
+
+function renderStep() {
+  buildOrder();
+  updateProgress(cur);
+  const idx = stepOrder[cur];
+  const step = STEPS[idx];
+  const sel = answers[step.id];
+  const isLast = cur === stepOrder.length - 1;
+
+  const optsHtml = step.opts.map(o => `
+    <button class="opt-btn${sel===o.v?' sel':''}" onclick="pick('${step.id}','${o.v}',this)">
+      <div class="opt-radio"><div class="opt-radio-dot"></div></div>
+      <div class="opt-text">
+        <div class="opt-title">${o.t}</div>
+        <div class="opt-sub-text">${o.s}</div>
+      </div>
+    </button>`).join('');
+
+  document.getElementById('wc').innerHTML = `
+    <div class="step-card">
+      <div class="step-eyebrow">${step.eyebrow}</div>
+      <div class="step-q">${step.q}</div>
+      <div class="step-sub">${step.sub}</div>
+      <div class="opts-grid">${optsHtml}</div>
+      <div class="nav-row">
+        ${cur > 0 ? `<button class="btn btn-ghost" onclick="back()">← Terug</button>` : ''}
+        <button class="btn btn-primary" id="nxt" onclick="next()" ${sel?'':'disabled'}>
+          ${isLast ? 'Bekijk advies →' : 'Volgende →'}
+        </button>
+      </div>
+    </div>`;
+}
+
+function renderResult() {
+  updateProgress(stepOrder.length);
+  const emuM = getEMU(answers);
+  const emhM = getEMH(answers);
+  const reasons = getReasons(answers);
+  const specs = getSpecs(answers);
+  const labels = getSummaryLabels(answers);
+  const p = answers.proto || 's0';
+  const emuOnly = ['modbus','tcpip','lora'].includes(p);
+  const emhOnly = p === 'smgw';
+  const needsMID = answers.toep === 'huur';
+
+  const pillsHtml = labels.map(l => `<span class="s-pill">${l}</span>`).join('');
+  const whyHtml = reasons.map(r => `<div class="why-row"><div class="why-dot"></div><span>${r}</span></div>`).join('');
+  const specsHtml = specs.map(s => `<div class="spec-box"><div class="spec-box-label">${s.l}</div><div class="spec-box-val">${s.v}</div></div>`).join('');
+
+  const noticeHtml = emuOnly
+    ? `<div class="notice notice-blue"><span class="notice-icon">ℹ</span><span>Het gekozen protocol (<strong>${p==='modbus'?'Modbus RTU':p==='tcpip'?'TCP/IP':'LoRa'}</strong>) is alleen beschikbaar bij EMU Metering. EMH heeft geen equivalent industriemeter voor dit protocol.</span></div>`
+    : emhOnly
+    ? `<div class="notice notice-blue"><span class="notice-icon">ℹ</span><span><strong>Smart Meter Gateway (iMSys)</strong> is een EMH-specifieke oplossing via DIZ-H + CASA gateway. EMU biedt geen native SMGw-integratie.</span></div>`
+    : needsMID
+    ? `<div class="notice notice-amber"><span class="notice-icon">⚠</span><span>Voor huurafrekening en doorlevering is een <strong>MID B+D gecertificeerde meter</strong> wettelijk verplicht. Controleer altijd de actuele certificaatstatus bij uw leverancier.</span></div>`
+    : '';
+
+  const emhNaNote = emhM.nr === '—'
+    ? `<div class="notice notice-blue" style="margin:0;border-radius:8px;"><span class="notice-icon">ℹ</span><span>EMH heeft geen DIN-rail industriemeter voor dit protocol. Overweeg EMU of raadpleeg EMH voor maatwerk.</span></div>`
+    : `
+      <div class="model-name-r">${emhM.n}</div>
+      <div class="model-nr-badge">${emhM.nr}</div>
+      <div class="model-pills">${emhM.specs.map(s=>`<span class="m-pill">${s}</span>`).join('')}</div>
+      ${emhM.note ? `<div class="model-note">${emhM.note}</div>` : ''}
+      <a class="model-link-emh" href="${emhM.url}" target="_blank">emh-metering.com →</a>`;
+
+  document.getElementById('wc').innerHTML = `
+    <div class="result-wrap">
+      <div class="result-header">
+        <h2>Uw meteradvies</h2>
+        <p>Op basis van uw selectie zijn dit de aanbevolen modellen per merk.</p>
+      </div>
+
+      <div class="summary-pills">${pillsHtml}</div>
+
+      <div class="why-card">
+        <h3>Selectieprofiel</h3>
+        ${whyHtml}
+      </div>
+
+      <div class="specs-row">${specsHtml}</div>
+
+      ${noticeHtml}
+
+      <div class="brands-label">Aanbevolen modellen per merk</div>
+      <div class="brand-grid">
+        <div class="brand-card">
+          <div class="brand-head bh-emu">
+            <div class="brand-logo-dot bld-emu"></div>
+            <span class="brand-head-name bhn-emu">EMU Metering</span>
+          </div>
+          <div class="brand-body">
+            <div class="model-name-r">${emuM.n}</div>
+            <div class="model-nr-badge">${emuM.nr}</div>
+            <div class="model-pills">${emuM.specs.map(s=>`<span class="m-pill">${s}</span>`).join('')}</div>
+            <a class="model-link-emu" href="${emuM.url}" target="_blank">emu-metering.com →</a>
+          </div>
+        </div>
+        <div class="brand-card">
+          <div class="brand-head bh-emh">
+            <div class="brand-logo-dot bld-emh"></div>
+            <span class="brand-head-name bhn-emh">EMH Metering</span>
+          </div>
+          <div class="brand-body">${emhNaNote}</div>
+        </div>
+      </div>
+
+      <div class="result-nav">
+        <button class="btn btn-ghost" onclick="back()">← Antwoorden aanpassen</button>
+        <button class="btn btn-ghost" onclick="restart()">Opnieuw beginnen</button>
+      </div>
+    </div>`;
+}
+
+function pick(id, v, el) {
+  answers[id] = v;
+  document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  const nxt = document.getElementById('nxt');
+  if (nxt) nxt.removeAttribute('disabled');
+}
+
+function next() {
+  buildOrder();
+  if (cur < stepOrder.length - 1) { cur++; renderStep(); }
+  else renderResult();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function back() {
+  if (cur > 0) { cur--; renderStep(); }
+  else renderResult();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restart() {
+  answers = {}; cur = 0; stepOrder = [];
+  renderStep();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Boot
+renderStep();
+</script>
+</body>
+</html>
